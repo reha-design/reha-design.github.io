@@ -81,3 +81,20 @@ footer {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* 필요에 따라 추가적인 스타일을 여기에 작성하세요 */
+h1{
+  background: rgb(62, 235, 94);
+  border-bottom: 2px solid #0056b3;
+  padding: auto;
+  border-radius: 10px;
+  
+}
+
+li{
+  background: rgb(62, 235, 94);
+  border-bottom: 2px solid #0056b3;
+  padding: auto;
+  border-radius: 10px;
+  margin: 20px;
+}
