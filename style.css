@@ -90,7 +90,7 @@ footer {
 h1 {
   /* 기존 h1의 배경색을 제거하고 헤더 색상으로 통일 */
   background: none;
-  border-bottom: 2px solid #f0f2f5;
+/*   border-bottom: 2px solid #f0f2f5; */
   padding: auto;
   border-radius: 10px;
 }
