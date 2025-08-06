@@ -1,0 +1,83 @@
+body {
+  background-color: #f4f7f6; /* Softer Mint White */
+  color: #5d5d5d; /* Darker Gray */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  /* Added for sticky footer */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background-color: #4ad039; /* Pastel Blue */
+  color: white;
+  padding: 1rem 2rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5em;
+}
+
+nav {
+  background-color: #00bd00; /* Lighter Pastel Blue */
+  padding: 0.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+nav a {
+  color: white;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+nav a:hover {
+  color: #ffafcc; /* Pastel Pink for hover */
+}
+
+main {
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    /* Added for sticky footer */
+    flex: 1;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 1.5rem 2rem;
+  width: 300px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.card h2 {
+  color: #0cc9d0; /* Pastel Blue */
+  border-bottom: 2px solid #f4f7f6;
+  padding-bottom: 0.5rem;
+}
+
+footer {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}

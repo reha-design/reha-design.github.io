@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <style>
+        .box{
+            width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            border: 5px solid #4897d4;
+            border-radius: 5px;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            width: 120px;
+            display: inline-block;
+        }
+        .input-group input {
+            width: 200px;
+        }
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h3>회원가입</h3>
+        <hr>
+        <div class="input-group">
+            <label>ID</label>
+            <input type="text" placeholder="아이디" autofocus />
+        </div>
+        <div class="input-group">
+            <label>비밀번호</label>
+            <input type="password" placeholder="비밀번호">
+        </div>
+        <div class="input-group">
+            <label>비밀번호 확인</label>
+            <input type="password" placeholder="비밀번호 확인">
+        </div>
+        <div class="input-group">
+            <label>이름</label>
+            <input type="text" placeholder="이름">
+        </div>
+        <div class="input-group">
+            <label>이메일</label>
+            <input type="email" placeholder="이메일">
+        </div>
+        <div style="margin-top: 20px;" class="center">
+            <button>회원가입</button>
+            <a href="ex_01.html"><button>취소</button></a>
+        </div>
+    </div>
+</body>
+</html>
