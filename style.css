@@ -1,34 +1,37 @@
 body {
-  background-color: #f4f7f6; /* Softer Mint White */
-  color: #5d5d5d; /* Darker Gray */
+  /* 배경색을 부드러운 미색으로 변경 */
+  background-color: #f0f2f5; /* Light Grayish Blue */
+  /* 텍스트 색상을 진회색으로 변경 */
+  color: #333333; /* Dark Charcoal */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   margin: 0;
   padding: 0;
-  /* Added for sticky footer */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
 header {
-  background-color: #4ad039; /* Pastel Blue */
+  /* 헤더 배경색을 차분한 남색 계열로 변경 */
+  background-color: #2c3e50; /* Dark Slate Gray */
   color: white;
   padding: 1rem 2rem;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
-    margin: 0;
-    font-size: 2.5em;
+  margin: 0;
+  font-size: 2.5em;
 }
 
 nav {
-  background-color: #00bd00; /* Lighter Pastel Blue */
+  /* 내비게이션 배경색을 헤더보다 조금 밝은 남색으로 변경 */
+  background-color: #34495e; /* Darker Slate Gray */
   padding: 0.5rem 2rem;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 nav a {
@@ -40,41 +43,42 @@ nav a {
 }
 
 nav a:hover {
-  color: #ffafcc; /* Pastel Pink for hover */
+  /* 호버 색상을 은은한 하늘색으로 변경 */
+  color: #ecf0f1; /* Light Gray */
 }
 
 main {
-    padding: 2rem;
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 2rem;
-    /* Added for sticky footer */
-    flex: 1;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  flex: 1;
 }
 
 .card {
-  background: white;
+  background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 1.5rem 2rem;
   width: 300px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .card h2 {
-  color: #0cc9d0; /* Pastel Blue */
-  border-bottom: 2px solid #f4f7f6;
+  /* 카드 제목 색상을 차분한 파란색 계열로 변경 */
+  color: #3498db; /* Bright Blue */
+  border-bottom: 2px solid #f0f2f5;
   padding-bottom: 0.5rem;
 }
 
 footer {
-  background-color: #333;
+  background-color: #2c3e50; /* 헤더와 같은 색상으로 통일 */
   color: white;
   text-align: center;
   padding: 1rem;
@@ -82,19 +86,20 @@ footer {
   box-sizing: border-box;
 }
 
-/* 필요에 따라 추가적인 스타일을 여기에 작성하세요 */
-h1{
-  background: rgb(62, 235, 94);
-  border-bottom: 2px solid #0056b3;
+/* 추가 스타일 */
+h1 {
+  /* 기존 h1의 배경색을 제거하고 헤더 색상으로 통일 */
+  background: none;
+  border-bottom: 2px solid #f0f2f5;
   padding: auto;
   border-radius: 10px;
-  
 }
 
-li{
-  background: rgb(62, 235, 94);
-  border-bottom: 2px solid #0056b3;
-  padding: auto;
-  border-radius: 10px;
+li {
+  /* 기존 li의 배경색을 제거하고 부드러운 테두리로 강조 */
+  background: none;
+  border-bottom: 1px solid #bdc3c7; /* 부드러운 회색 */
+  padding: 10px;
+  border-radius: 5px;
   margin: 20px;
 }
