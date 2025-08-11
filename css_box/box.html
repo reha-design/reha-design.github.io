@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>box 예제</title>
+    <style>
+      /* div.box {
+        width: 150px;
+        height: 50px;
+        margin: 40px;
+        border-width: 30px;
+        padding: 20px;
+      } */
+
+      .box{
+        width: 150px;
+        height: 50px;
+        background-color: rgb(49, 220, 163);
+      }
+
+      p:first-of-type {
+        border: 5px solid rgb(134, 193, 255);
+        padding: 20px;
+        margin: 50px;
+        background-color: rgb(178, 243, 255);
+        border-radius: 20px;
+        box-shadow: 5px 5px 15px black;
+      }
+
+      #p2{
+        border: 5px solid rgb(56, 152, 255);
+        padding: 20px;
+        margin: 50px;
+        background-color: rgb(148, 255, 207);
+      }
+
+      #p3{
+        border: 5px solid rgb(255, 56, 204);
+        padding: 20px;
+        margin: 50px;
+        background-color: rgb(255, 148, 243);
+        border-radius: 10px;
+      }
+      #p4{
+        border: 5px solid rgb(255, 204, 56);
+        border-radius: 10px 30px;
+        padding: 20px;
+        margin: 50px;
+        background-color: rgb(255, 243, 148);
+        text-align: center;        
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        text-shadow: 0px 0px 20px rgb(213, 62, 255);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">안녕하세요</div>
+    <p>박스 예제입니다.</p>
+    <p id="p2">박스(2) 예제입니다.</p>
+    <p id="p3">박스(3) 예제입니다.</p>
+    <p id="p4">박스(4) 예제입니다.</p>
+  </body>
+</html>
