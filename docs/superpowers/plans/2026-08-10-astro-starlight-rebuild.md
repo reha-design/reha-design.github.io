@@ -14,7 +14,7 @@
 - 기본 브랜치와 배포 트리거는 `main`이다.
 - 원본 Docusaurus 커밋 `19be02f`는 `backup/docusaurus-20260808`에 유지한다.
 - 사이트 제목은 `레하의 개발 학습노트`이다.
-- 기본 locale은 `ko`, 문서 언어는 `ko-KR`이다.
+- 루트 locale은 `root`, 문서 언어는 `ko-KR`이며 URL에 `/ko` 접두사를 붙이지 않는다.
 - Mermaid integration은 Starlight integration보다 먼저 배치하고 `autoTheme: true`를 사용한다.
 - 사이드바 순서는 Network, Security, Database, Infra, Backend이다.
 - SVG 파일 경로는 `public/diagrams/`이며 문서 URL은 `/diagrams/<파일명>.svg`이다.
@@ -37,7 +37,7 @@
 
 **Interfaces:**
 - Consumes: 승인된 설계와 `backup/docusaurus-20260808`
-- Produces: `npm test`, `npm run dev`, `npm run build`, `/ko/` Starlight 홈
+- Produces: `npm test`, `npm run dev`, `npm run build`, `/` Starlight 홈
 
 - [ ] **Step 1: 실제 빌드 결과를 검사하는 실패 테스트를 작성한다**
 
@@ -60,13 +60,14 @@ const build = spawnSync(npm, ['run', 'build'], {
 
 assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
-test('builds the Korean Starlight home at /ko/', () => {
-  const homePath = join(dist, 'ko', 'index.html');
-  assert.equal(existsSync(homePath), true, 'dist/ko/index.html must exist');
+test('builds the Korean Starlight home at /', () => {
+  const homePath = join(dist, 'index.html');
+  assert.equal(existsSync(homePath), true, 'dist/index.html must exist');
   const html = readFileSync(homePath, 'utf8');
   assert.match(html, /<html[^>]+lang="ko-KR"/);
   assert.match(html, /레하의 개발 학습노트/);
   assert.match(html, /Network/);
+  assert.match(html, /href="\/" class="site-title/);
 });
 ```
 
@@ -74,7 +75,7 @@ test('builds the Korean Starlight home at /ko/', () => {
 
 Run: `node --test tests/site-build.test.mjs`
 
-Expected: FAIL because the existing project does not create `dist/ko/index.html`.
+Expected: FAIL because the existing project does not create the Astro `dist/index.html` output.
 
 - [ ] **Step 3: 제거 대상이 저장소 내부인지 확인하고 Docusaurus 파일을 정리한다**
 
@@ -156,19 +157,19 @@ export default defineConfig({
     starlight({
       title: '레하의 개발 학습노트',
       description: '백엔드, CS, 네트워크, 보안, 데이터베이스, 인프라 학습 기록',
-      defaultLocale: 'ko',
+      defaultLocale: 'root',
       locales: {
-        ko: { label: '한국어', lang: 'ko-KR' },
+        root: { label: '한국어', lang: 'ko-KR' },
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/reha-design' },
       ],
       sidebar: [
-        { label: 'Network', autogenerate: { directory: 'network' } },
-        { label: 'Security', autogenerate: { directory: 'security' } },
-        { label: 'Database', autogenerate: { directory: 'database' } },
-        { label: 'Infra', autogenerate: { directory: 'infra' } },
-        { label: 'Backend', autogenerate: { directory: 'backend' } },
+        { label: 'Network', items: [{ autogenerate: { directory: 'network' } }] },
+        { label: 'Security', items: [{ autogenerate: { directory: 'security' } }] },
+        { label: 'Database', items: [{ autogenerate: { directory: 'database' } }] },
+        { label: 'Infra', items: [{ autogenerate: { directory: 'infra' } }] },
+        { label: 'Backend', items: [{ autogenerate: { directory: 'backend' } }] },
       ],
     }),
   ],
@@ -240,8 +241,8 @@ git commit -m "build: replace Docusaurus with Astro"
 - Create: `public/diagrams/.gitkeep`
 
 **Interfaces:**
-- Consumes: Task 1의 `/ko/` Starlight 사이트
-- Produces: `/ko/network/tcp-udp-firewall-ips/`, Mermaid HTML, 추적되는 빈 카테고리와 SVG 경로
+- Consumes: Task 1의 `/` Starlight 사이트
+- Produces: `/network/tcp-udp-firewall-ips/`, Mermaid HTML, 추적되는 빈 카테고리와 SVG 경로
 
 - [ ] **Step 1: Network 문서의 실제 빌드 결과를 검사하는 테스트를 추가한다**
 
@@ -249,7 +250,7 @@ Append this test to `tests/site-build.test.mjs`:
 
 ```js
 test('builds the Network article with Mermaid output', () => {
-  const articlePath = join(dist, 'ko', 'network', 'tcp-udp-firewall-ips', 'index.html');
+  const articlePath = join(dist, 'network', 'tcp-udp-firewall-ips', 'index.html');
   assert.equal(existsSync(articlePath), true, 'Network article route must exist');
   const html = readFileSync(articlePath, 'utf8');
   assert.match(html, /TCP, UDP, 방화벽, IPS 차이/);
@@ -571,7 +572,7 @@ Expected: 2 tests PASS, 0 failures.
 
 Run: `npm run build`
 
-Expected: exit 0 with `/ko/` and Network article routes generated.
+Expected: exit 0 with `/` and Network article routes generated.
 
 - [ ] **Step 4: 개발 서버에서 한국어 홈을 확인한다**
 
@@ -582,7 +583,7 @@ $server = Start-Process npm -ArgumentList @('run','dev','--','--host','127.0.0.1
 try {
   $deadline = (Get-Date).AddSeconds(30)
   do {
-    try { $response = Invoke-WebRequest 'http://127.0.0.1:4321/ko/' -UseBasicParsing; break } catch { Start-Sleep -Milliseconds 500 }
+    try { $response = Invoke-WebRequest 'http://127.0.0.1:4321/' -UseBasicParsing; break } catch { Start-Sleep -Milliseconds 500 }
   } while ((Get-Date) -lt $deadline)
   if (-not $response -or $response.StatusCode -ne 200) { throw 'Astro dev server did not return 200' }
   if ($response.Content -notmatch '레하의 개발 학습노트') { throw 'Home title missing' }
@@ -645,10 +646,10 @@ Expected: workflow conclusion `success` for the pushed HEAD SHA.
 - [ ] **Step 4: 공개 사이트를 검증한다**
 
 ```powershell
-$home = Invoke-WebRequest 'https://reha-design.github.io/ko/' -UseBasicParsing
+$home = Invoke-WebRequest 'https://reha-design.github.io/' -UseBasicParsing
 if ($home.StatusCode -ne 200) { throw "Unexpected status: $($home.StatusCode)" }
 if ($home.Content -notmatch '레하의 개발 학습노트') { throw 'Home title missing' }
-$article = Invoke-WebRequest 'https://reha-design.github.io/ko/network/tcp-udp-firewall-ips/' -UseBasicParsing
+$article = Invoke-WebRequest 'https://reha-design.github.io/network/tcp-udp-firewall-ips/' -UseBasicParsing
 if ($article.StatusCode -ne 200) { throw "Unexpected article status: $($article.StatusCode)" }
 if ($article.Content -notmatch 'TCP, UDP, 방화벽, IPS 차이') { throw 'Article title missing' }
 ```

@@ -16,7 +16,7 @@
 
 Astro를 정적 사이트 생성기로 사용하고 `@astrojs/starlight`를 문서 UI와 탐색 구조에 사용한다. `astro-mermaid`와 `mermaid`를 통해 Markdown의 `mermaid` 코드 블록을 빌드 시 렌더링한다. 사용자 GitHub Pages 저장소이므로 `site`만 `https://reha-design.github.io`로 지정하고 `base`는 설정하지 않는다.
 
-Starlight는 한국어를 기본 locale로 사용한다. 사이트 제목은 `레하의 개발 학습노트`, 설명은 `백엔드, CS, 네트워크, 보안, 데이터베이스, 인프라 학습 기록`으로 고정한다. 사이드바는 Network, Security, Database, Infra, Backend 순서이며 각 디렉터리에서 자동 생성한다.
+Starlight는 루트 경로에 `ko-KR` 한국어 locale을 사용한다. 현재 Starlight에서 루트 단일 언어 사이트는 `defaultLocale: 'root'`와 `locales.root`로 설정하여 `/ko` 접두사나 깨진 홈 링크 없이 `https://reha-design.github.io/`에서 제공한다. 사이트 제목은 `레하의 개발 학습노트`, 설명은 `백엔드, CS, 네트워크, 보안, 데이터베이스, 인프라 학습 기록`으로 고정한다. 사이드바는 Network, Security, Database, Infra, Backend 순서이며 각 디렉터리에서 자동 생성한다.
 
 ## 파일 구조와 책임
 
