@@ -4,7 +4,7 @@
 
 **Goal:** Docusaurus 저장소를 한국어 Astro Starlight 학습노트로 교체하고 `main`에서 GitHub Pages에 배포한다.
 
-**Architecture:** Astro 7이 정적 사이트를 생성하고 Starlight가 문서 라우팅·탐색·한국어 UI를 제공한다. `astro-mermaid`가 Markdown Mermaid 블록을 처리하며, Node 내장 테스트가 구성·콘텐츠·빌드 산출물 계약을 검증한다.
+**Architecture:** Astro 7이 정적 사이트를 생성하고 Starlight가 문서 라우팅·탐색·한국어 UI를 제공한다. `astro-mermaid`가 Markdown Mermaid 블록을 처리하며, Node 내장 테스트가 실제 Astro 빌드와 생성된 HTML을 통해 사용자 가시 계약을 검증한다.
 
 **Tech Stack:** Node.js 22, npm 10, Astro 7.2.0, Starlight 0.41.7, astro-mermaid 2.1.0, Mermaid 11.16.1, GitHub Actions, GitHub Pages
 
@@ -19,88 +19,64 @@
 - 사이드바 순서는 Network, Security, Database, Infra, Backend이다.
 - SVG 파일 경로는 `public/diagrams/`이며 문서 URL은 `/diagrams/<파일명>.svg`이다.
 - workflow action은 `actions/checkout@v7`, `withastro/action@v6`, `actions/deploy-pages@v5`를 사용한다.
-- 프로덕션 파일을 추가하기 전에 해당 계약을 검사하는 실패 테스트를 먼저 실행한다.
+- 테스트는 소스 문자열이 아니라 실제 Astro 빌드의 종료 코드, 라우트, HTML 및 Mermaid 출력을 검사한다.
 
 ---
 
-### Task 1: Astro 런타임·구성·배포 계약
+### Task 1: Astro 런타임과 한국어 홈
 
 **Files:**
-- Create: `tests/site-config.test.mjs`
+- Create: `tests/site-build.test.mjs`
 - Create: `package.json`
+- Generate: `package-lock.json`
 - Create: `astro.config.mjs`
 - Create: `src/content.config.ts`
-- Modify: `.github/workflows/deploy.yml`
-- Generate: `package-lock.json`
-- Remove: `blog/`, 기존 Docusaurus `docs/` 콘텐츠, 기존 `src/`, `static/`, `.docusaurus/`, `build/`, `docusaurus.config.js`, `sidebars.js`, `bun.lock`
+- Create: `src/content/docs/index.mdx`
+- Modify: `.gitignore`
+- Remove: Docusaurus 런타임과 샘플 콘텐츠
 
 **Interfaces:**
-- Consumes: 승인된 설계와 원격 백업 브랜치
-- Produces: `npm test`, `npm run dev`, `npm run build`, Starlight의 `docs` 콘텐츠 컬렉션, `main` Pages workflow
+- Consumes: 승인된 설계와 `backup/docusaurus-20260808`
+- Produces: `npm test`, `npm run dev`, `npm run build`, `/ko/` Starlight 홈
 
-- [ ] **Step 1: 구성 계약 테스트를 작성한다**
+- [ ] **Step 1: 실제 빌드 결과를 검사하는 실패 테스트를 작성한다**
 
 ```js
-// tests/site-config.test.mjs
+// tests/site-build.test.mjs
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
-const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const dist = join(process.cwd(), 'dist');
+rmSync(dist, { recursive: true, force: true });
 
-test('Astro dependencies and scripts are configured', () => {
-  const pkg = JSON.parse(read('package.json'));
-  assert.equal(pkg.scripts.test, 'node --test tests/*.test.mjs');
-  assert.equal(pkg.dependencies.astro, '^7.2.0');
-  assert.equal(pkg.dependencies['@astrojs/starlight'], '^0.41.7');
-  assert.equal(pkg.dependencies['astro-mermaid'], '^2.1.0');
-  assert.equal(pkg.dependencies.mermaid, '^11.16.1');
+const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const build = spawnSync(npm, ['run', 'build'], {
+  cwd: process.cwd(),
+  encoding: 'utf8',
 });
 
-test('Astro config uses the production URL, Korean locale, and integration order', () => {
-  const config = read('astro.config.mjs');
-  assert.match(config, /site: 'https:\/\/reha-design\.github\.io'/);
-  assert.doesNotMatch(config, /\bbase:/);
-  assert.match(config, /defaultLocale: 'ko'/);
-  assert.match(config, /lang: 'ko-KR'/);
-  assert.ok(config.indexOf('mermaid({') < config.indexOf('starlight({'));
-  for (const label of ['Network', 'Security', 'Database', 'Infra', 'Backend']) {
-    assert.match(config, new RegExp(`label: '${label}'`));
-  }
-});
+assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
-test('Starlight docs collection is registered', () => {
-  const config = read('src/content.config.ts');
-  assert.match(config, /docsLoader\(\)/);
-  assert.match(config, /docsSchema\(\)/);
-});
-
-test('Pages workflow deploys main with the requested actions', () => {
-  const workflow = read('.github/workflows/deploy.yml');
-  assert.match(workflow, /branches: \[main\]/);
-  assert.match(workflow, /actions\/checkout@v7/);
-  assert.match(workflow, /withastro\/action@v6/);
-  assert.match(workflow, /actions\/deploy-pages@v5/);
-});
-
-test('Docusaurus runtime artifacts are absent', () => {
-  for (const path of [
-    'blog', 'static', '.docusaurus', 'build', 'docusaurus.config.js',
-    'sidebars.js', 'bun.lock', 'docs/intro.mdx', 'docs/tutorial-basics',
-    'docs/tutorial-extras',
-  ]) {
-    assert.equal(existsSync(new URL(`../${path}`, import.meta.url)), false, path);
-  }
+test('builds the Korean Starlight home at /ko/', () => {
+  const homePath = join(dist, 'ko', 'index.html');
+  assert.equal(existsSync(homePath), true, 'dist/ko/index.html must exist');
+  const html = readFileSync(homePath, 'utf8');
+  assert.match(html, /<html[^>]+lang="ko-KR"/);
+  assert.match(html, /레하의 개발 학습노트/);
+  assert.match(html, /Network/);
 });
 ```
 
-- [ ] **Step 2: 테스트가 기존 Docusaurus 구성을 이유로 실패하는지 확인한다**
+- [ ] **Step 2: 기존 Docusaurus가 Astro 산출물을 만들지 못해 테스트가 실패하는지 확인한다**
 
-Run: `node --test tests/site-config.test.mjs`
+Run: `node --test tests/site-build.test.mjs`
 
-Expected: FAIL. 기존 `package.json`에 Astro 의존성과 `test` script가 없거나 Docusaurus 파일 존재 검사가 실패한다.
+Expected: FAIL because the existing project does not create `dist/ko/index.html`.
 
-- [ ] **Step 3: 제거 대상의 절대 경로가 저장소 내부인지 확인하고 Docusaurus 파일을 정리한다**
+- [ ] **Step 3: 제거 대상이 저장소 내부인지 확인하고 Docusaurus 파일을 정리한다**
 
 ```powershell
 $repo = (Resolve-Path '.').Path
@@ -113,12 +89,14 @@ $resolved = $targets | ForEach-Object { Join-Path $repo $_ }
 $resolved | ForEach-Object {
   if (-not $_.StartsWith($repo + [IO.Path]::DirectorySeparatorChar)) { throw "Unsafe target: $_" }
 }
-$resolved | ForEach-Object { if (Test-Path -LiteralPath $_) { Remove-Item -Recurse -Force -LiteralPath $_ } }
+$resolved | ForEach-Object {
+  if (Test-Path -LiteralPath $_) { Remove-Item -Recurse -Force -LiteralPath $_ }
+}
 Get-ChildItem -LiteralPath 'docs' -Force | Where-Object { $_.Name -ne 'superpowers' } |
   ForEach-Object { Remove-Item -Recurse -Force -LiteralPath $_.FullName }
 ```
 
-- [ ] **Step 4: Astro package와 콘텐츠 컬렉션을 생성한다**
+- [ ] **Step 4: Astro package와 ignore 정책을 생성한다**
 
 ```json
 // package.json
@@ -144,6 +122,16 @@ Get-ChildItem -LiteralPath 'docs' -Force | Where-Object { $_.Name -ne 'superpowe
 }
 ```
 
+```gitignore
+node_modules/
+dist/
+.astro/
+.env
+.env.production
+```
+
+- [ ] **Step 5: Starlight 콘텐츠 컬렉션과 Astro 설정을 생성한다**
+
 ```ts
 // src/content.config.ts
 import { defineCollection } from 'astro:content';
@@ -154,8 +142,6 @@ export const collections = {
   docs: defineCollection({ loader: docsLoader(), schema: docsSchema() }),
 };
 ```
-
-- [ ] **Step 5: Astro와 Starlight 설정을 생성한다**
 
 ```js
 // astro.config.mjs
@@ -189,142 +175,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 6: GitHub Pages workflow를 교체한다**
-
-```yaml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout your repository
-        uses: actions/checkout@v7
-
-      - name: Install, build, and upload your site
-        uses: withastro/action@v6
-        with:
-          package-manager: npm@latest
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
-```
-
-- [ ] **Step 7: 의존성을 설치하고 구성 테스트를 통과시킨다**
-
-Run: `npm install`
-
-Expected: `package-lock.json` 생성, exit 0.
-
-Run: `node --test tests/site-config.test.mjs`
-
-Expected: 5 tests PASS, 0 failures.
-
-- [ ] **Step 8: 런타임 전환을 커밋한다**
-
-```bash
-git add -A
-git commit -m "build: replace Docusaurus with Astro"
-```
-
----
-
-### Task 2: 한국어 학습 콘텐츠와 SVG 정책
-
-**Files:**
-- Create: `tests/site-content.test.mjs`
-- Create: `src/content/docs/index.mdx`
-- Create: `src/content/docs/network/tcp-udp-firewall-ips.md`
-- Create: `src/content/docs/security/.gitkeep`
-- Create: `src/content/docs/database/.gitkeep`
-- Create: `src/content/docs/infra/.gitkeep`
-- Create: `src/content/docs/backend/.gitkeep`
-- Create: `public/diagrams/.gitkeep`
-- Create: `README.md`
-
-**Interfaces:**
-- Consumes: Task 1의 Starlight `docs` 컬렉션과 npm test script
-- Produces: 홈 문서, Network 문서, 빈 카테고리 디렉터리, SVG 저장 경로, 운영 안내
-
-- [ ] **Step 1: 콘텐츠 계약 테스트를 작성한다**
-
-```js
-// tests/site-content.test.mjs
-import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
-import test from 'node:test';
-
-const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
-
-test('Korean landing page describes the categories and writing flow', () => {
-  const home = read('src/content/docs/index.mdx');
-  assert.match(home, /title: 레하의 개발 학습노트/);
-  for (const category of ['Network', 'Security', 'Database', 'Infra', 'Backend']) {
-    assert.match(home, new RegExp(`- ${category}`));
-  }
-  assert.match(home, /1\. 한 줄 요약/);
-  assert.match(home, /6\. 꼬리 질문/);
-});
-
-test('Network article includes comparisons, interview answer, and Mermaid diagrams', () => {
-  const article = read('src/content/docs/network/tcp-udp-firewall-ips.md');
-  assert.match(article, /title: TCP, UDP, 방화벽, IPS 차이/);
-  assert.match(article, /```mermaid\s+flowchart LR/);
-  assert.match(article, /```mermaid\s+sequenceDiagram/);
-  assert.match(article, /## TCP와 UDP 비교/);
-  assert.match(article, /## 방화벽과 IPS 비교/);
-  assert.match(article, /## 면접 답변/);
-});
-
-test('Empty category and SVG directories remain tracked', () => {
-  for (const path of [
-    'src/content/docs/security/.gitkeep',
-    'src/content/docs/database/.gitkeep',
-    'src/content/docs/infra/.gitkeep',
-    'src/content/docs/backend/.gitkeep',
-    'public/diagrams/.gitkeep',
-  ]) {
-    assert.equal(existsSync(new URL(`../${path}`, import.meta.url)), true, path);
-  }
-});
-
-test('README documents main deployment and the public URL', () => {
-  const readme = read('README.md');
-  assert.match(readme, /https:\/\/reha-design\.github\.io/);
-  assert.match(readme, /`main` 브랜치에 push/);
-  assert.match(readme, /public\/diagrams/);
-});
-```
-
-- [ ] **Step 2: 콘텐츠 테스트가 문서 부재를 이유로 실패하는지 확인한다**
-
-Run: `node --test tests/site-content.test.mjs`
-
-Expected: FAIL with `ENOENT` for `src/content/docs/index.mdx`.
-
-- [ ] **Step 3: 홈 문서를 생성한다**
+- [ ] **Step 6: 한국어 홈 문서를 생성한다**
 
 ```mdx
 ---
@@ -358,7 +209,64 @@ description: 백엔드, CS, 네트워크, 보안, 데이터베이스, 인프라 
 6. 꼬리 질문
 ```
 
-- [ ] **Step 4: 첫 Network 학습 문서를 생성한다**
+- [ ] **Step 7: 의존성을 설치하고 빌드 테스트를 통과시킨다**
+
+Run: `npm install`
+
+Expected: `package-lock.json` is generated, exit 0.
+
+Run: `node --test tests/site-build.test.mjs`
+
+Expected: 1 test PASS, 0 failures.
+
+- [ ] **Step 8: Astro 런타임을 커밋한다**
+
+```bash
+git add -A
+git commit -m "build: replace Docusaurus with Astro"
+```
+
+---
+
+### Task 2: Network 문서와 Mermaid 렌더링
+
+**Files:**
+- Modify: `tests/site-build.test.mjs`
+- Create: `src/content/docs/network/tcp-udp-firewall-ips.md`
+- Create: `src/content/docs/security/.gitkeep`
+- Create: `src/content/docs/database/.gitkeep`
+- Create: `src/content/docs/infra/.gitkeep`
+- Create: `src/content/docs/backend/.gitkeep`
+- Create: `public/diagrams/.gitkeep`
+
+**Interfaces:**
+- Consumes: Task 1의 `/ko/` Starlight 사이트
+- Produces: `/ko/network/tcp-udp-firewall-ips/`, Mermaid HTML, 추적되는 빈 카테고리와 SVG 경로
+
+- [ ] **Step 1: Network 문서의 실제 빌드 결과를 검사하는 테스트를 추가한다**
+
+Append this test to `tests/site-build.test.mjs`:
+
+```js
+test('builds the Network article with Mermaid output', () => {
+  const articlePath = join(dist, 'ko', 'network', 'tcp-udp-firewall-ips', 'index.html');
+  assert.equal(existsSync(articlePath), true, 'Network article route must exist');
+  const html = readFileSync(articlePath, 'utf8');
+  assert.match(html, /TCP, UDP, 방화벽, IPS 차이/);
+  assert.match(html, /TCP와 UDP 비교/);
+  assert.match(html, /방화벽과 IPS 비교/);
+  assert.match(html, /면접 답변/);
+  assert.match(html, /class="mermaid"|data-mermaid|<svg/);
+});
+```
+
+- [ ] **Step 2: Network 라우트가 없어 테스트가 실패하는지 확인한다**
+
+Run: `node --test tests/site-build.test.mjs`
+
+Expected: home test PASS and Network article test FAIL with `Network article route must exist`.
+
+- [ ] **Step 3: 첫 Network 학습 문서를 생성한다**
 
 Create `src/content/docs/network/tcp-udp-firewall-ips.md` with this exact content:
 
@@ -524,9 +432,44 @@ TCP와 UDP는 데이터를 전송하는 방식에 대한 전송 계층 프로토
 즉, TCP와 UDP는 통신 방식이고, 방화벽과 IPS는 그 통신을 보호하고 통제하는 보안 장치라고 볼 수 있습니다.
 `````
 
-- [ ] **Step 5: 빈 카테고리와 SVG 디렉터리를 추적하고 README를 생성한다**
+- [ ] **Step 4: 빈 카테고리와 SVG 경로를 Git에 유지한다**
 
-Create empty `.gitkeep` files at every path listed in this task. Create `README.md` with this exact content:
+Create empty `.gitkeep` files at these exact paths:
+
+```text
+src/content/docs/security/.gitkeep
+src/content/docs/database/.gitkeep
+src/content/docs/infra/.gitkeep
+src/content/docs/backend/.gitkeep
+public/diagrams/.gitkeep
+```
+
+- [ ] **Step 5: 전체 빌드 테스트를 통과시킨다**
+
+Run: `npm test`
+
+Expected: 2 tests PASS, 0 failures.
+
+- [ ] **Step 6: 학습 콘텐츠를 커밋한다**
+
+```bash
+git add public src/content/docs tests/site-build.test.mjs
+git commit -m "feat: add Korean learning notes"
+```
+
+---
+
+### Task 3: README·Pages workflow·로컬 서버 검증
+
+**Files:**
+- Create: `README.md`
+- Modify: `.github/workflows/deploy.yml`
+
+**Interfaces:**
+- Consumes: Task 2의 빌드 가능한 Starlight 사이트
+- Produces: `main` Pages 배포 흐름과 운영 문서
+
+- [ ] **Step 1: README를 생성한다**
 
 ````md
 # 레하의 개발 학습노트
@@ -577,73 +520,60 @@ public/diagrams/
 ```
 ````
 
-- [ ] **Step 6: 콘텐츠 테스트와 전체 테스트를 통과시킨다**
+- [ ] **Step 2: GitHub Pages workflow를 교체한다**
 
-Run: `node --test tests/site-content.test.mjs`
+```yaml
+name: Deploy to GitHub Pages
 
-Expected: 4 tests PASS, 0 failures.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v7
+
+      - name: Install, build, and upload your site
+        uses: withastro/action@v6
+        with:
+          package-manager: npm@latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+```
+
+- [ ] **Step 3: 프로덕션 빌드와 테스트를 새로 실행한다**
 
 Run: `npm test`
 
-Expected: 9 tests PASS, 0 failures.
-
-- [ ] **Step 7: 콘텐츠를 커밋한다**
-
-```bash
-git add README.md public src/content/docs tests/site-content.test.mjs
-git commit -m "feat: add Korean learning notes"
-```
-
----
-
-### Task 3: 빌드 산출물과 개발 서버 검증
-
-**Files:**
-- Create: `tests/build-output.test.mjs`
-- Generate: `dist/` (gitignored build output)
-
-**Interfaces:**
-- Consumes: Task 1의 Astro 빌드 명령과 Task 2의 문서 콘텐츠
-- Produces: 배포 가능한 정적 HTML 및 Mermaid 렌더링 증거
-
-- [ ] **Step 1: 빌드 산출물 계약 테스트를 작성한다**
-
-```js
-// tests/build-output.test.mjs
-import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import test from 'node:test';
-
-test('built site contains the home, Network article, and rendered Mermaid markup', () => {
-  assert.equal(existsSync('dist'), true, 'dist must exist after npm run build');
-  const htmlFiles = readdirSync('dist', { recursive: true })
-    .filter((path) => path.endsWith('.html'));
-  const html = htmlFiles.map((path) => readFileSync(join('dist', path), 'utf8')).join('\n');
-  assert.match(html, /레하의 개발 학습노트/);
-  assert.match(html, /TCP, UDP, 방화벽, IPS 차이/);
-  assert.match(html, /Network/);
-  assert.match(html, /class="mermaid"|data-mermaid|<svg/);
-});
-```
-
-- [ ] **Step 2: 산출물 테스트가 `dist` 부재를 이유로 실패하는지 확인한다**
-
-Run: `if (Test-Path dist) { Remove-Item -Recurse -Force -LiteralPath (Resolve-Path dist) }; node --test tests/build-output.test.mjs`
-
-Expected: FAIL with `dist must exist after npm run build`.
-
-- [ ] **Step 3: 프로덕션 빌드와 전체 테스트를 실행한다**
+Expected: 2 tests PASS, 0 failures.
 
 Run: `npm run build`
 
-Expected: Astro build exit 0 and pages generated below `dist/`.
+Expected: exit 0 with `/ko/` and Network article routes generated.
 
-Run: `npm test`
-
-Expected: 10 tests PASS, 0 failures.
-
-- [ ] **Step 4: 개발 서버에서 홈과 Network 문서를 확인한다**
+- [ ] **Step 4: 개발 서버에서 한국어 홈을 확인한다**
 
 ```powershell
 $stdout = Join-Path $env:TEMP 'reha-astro-dev.out.log'
@@ -663,11 +593,11 @@ try {
 
 Expected: HTTP 200 and the Korean home title is present.
 
-- [ ] **Step 5: 빌드 검증을 커밋한다**
+- [ ] **Step 5: README와 workflow를 커밋한다**
 
 ```bash
-git add tests/build-output.test.mjs
-git commit -m "test: verify Starlight build output"
+git add README.md .github/workflows/deploy.yml
+git commit -m "ci: deploy Astro site from main"
 ```
 
 ---
@@ -686,7 +616,7 @@ git commit -m "test: verify Starlight build output"
 
 Run: `npm test`
 
-Expected: 10 tests PASS, 0 failures.
+Expected: 2 tests PASS, 0 failures.
 
 Run: `npm run build`
 
@@ -700,13 +630,14 @@ Expected: no whitespace errors and no uncommitted files; `main` is ahead of `ori
 
 Run: `git push origin main`
 
-Expected: remote `main` advances to the local HEAD.
+Expected: remote `main` advances to local HEAD.
 
 - [ ] **Step 3: GitHub Actions Pages workflow를 감시한다**
 
-```bash
+```powershell
 gh run list --workflow deploy.yml --branch main --limit 1 --json databaseId,status,conclusion,headSha,url
-gh run watch <databaseId> --exit-status
+$runId = gh run list --workflow deploy.yml --branch main --limit 1 --json databaseId --jq '.[0].databaseId'
+gh run watch $runId --exit-status
 ```
 
 Expected: workflow conclusion `success` for the pushed HEAD SHA.
