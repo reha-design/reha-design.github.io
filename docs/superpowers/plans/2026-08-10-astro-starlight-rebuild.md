@@ -257,7 +257,11 @@ test('builds the Network article with Mermaid output', () => {
   assert.match(html, /TCP와 UDP 비교/);
   assert.match(html, /방화벽과 IPS 비교/);
   assert.match(html, /면접 답변/);
-  assert.match(html, /class="mermaid"|data-mermaid|<svg/);
+  assert.equal(
+    html.match(/<pre dir="ltr" class="mermaid">/g)?.length,
+    2,
+    'both Mermaid diagrams must be prepared for rendering',
+  );
 });
 ```
 

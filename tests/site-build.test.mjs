@@ -24,3 +24,18 @@ test('builds the Korean Starlight home at /', () => {
   assert.match(html, /Network/);
   assert.match(html, /href="\/" class="site-title/);
 });
+
+test('builds the Network article with Mermaid output', () => {
+  const articlePath = join(dist, 'network', 'tcp-udp-firewall-ips', 'index.html');
+  assert.equal(existsSync(articlePath), true, 'Network article route must exist');
+  const html = readFileSync(articlePath, 'utf8');
+  assert.match(html, /TCP, UDP, 방화벽, IPS 차이/);
+  assert.match(html, /TCP와 UDP 비교/);
+  assert.match(html, /방화벽과 IPS 비교/);
+  assert.match(html, /면접 답변/);
+  assert.equal(
+    html.match(/<pre dir="ltr" class="mermaid">/g)?.length,
+    2,
+    'both Mermaid diagrams must be prepared for rendering',
+  );
+});
