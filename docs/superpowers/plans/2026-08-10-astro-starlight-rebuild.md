@@ -581,22 +581,21 @@ Expected: exit 0 with `/` and Network article routes generated.
 - [ ] **Step 4: 개발 서버에서 한국어 홈을 확인한다**
 
 ```powershell
-$stdout = Join-Path $env:TEMP 'reha-astro-dev.out.log'
-$stderr = Join-Path $env:TEMP 'reha-astro-dev.err.log'
-$server = Start-Process npm -ArgumentList @('run','dev','--','--host','127.0.0.1','--port','4321') -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+npm run dev -- --host localhost --port 4321
 try {
-  $deadline = (Get-Date).AddSeconds(30)
-  do {
-    try { $response = Invoke-WebRequest 'http://127.0.0.1:4321/' -UseBasicParsing; break } catch { Start-Sleep -Milliseconds 500 }
-  } while ((Get-Date) -lt $deadline)
-  if (-not $response -or $response.StatusCode -ne 200) { throw 'Astro dev server did not return 200' }
-  if ($response.Content -notmatch '레하의 개발 학습노트') { throw 'Home title missing' }
+  $homeResponse = Invoke-WebRequest 'http://localhost:4321/' -UseBasicParsing
+  $articleResponse = Invoke-WebRequest 'http://localhost:4321/network/tcp-udp-firewall-ips/' -UseBasicParsing
+  $latin1 = [Text.Encoding]::GetEncoding(28591)
+  $homeHtml = [Text.Encoding]::UTF8.GetString($latin1.GetBytes($homeResponse.Content))
+  $articleHtml = [Text.Encoding]::UTF8.GetString($latin1.GetBytes($articleResponse.Content))
+  if ($homeResponse.StatusCode -ne 200 -or $homeHtml -notmatch '레하의 개발 학습노트') { throw 'Home verification failed' }
+  if ($articleResponse.StatusCode -ne 200 -or $articleHtml -notmatch 'TCP, UDP, 방화벽, IPS 차이') { throw 'Article verification failed' }
 } finally {
-  if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id }
+  npx astro dev stop
 }
 ```
 
-Expected: HTTP 200 and the Korean home title is present.
+Expected: both routes return HTTP 200 with their Korean titles, then `astro dev status` reports no running server.
 
 - [ ] **Step 5: README와 workflow를 커밋한다**
 
